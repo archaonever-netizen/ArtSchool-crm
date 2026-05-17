@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Выбор роли{% endblock %}
+{% block content %}
+<style>
+    body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+    .role-card {
+        background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        padding: 2rem; text-align: center; height: 100%; transition: transform 0.2s;
+    }
+    .role-card:hover { transform: translateY(-5px); }
+    .role-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .btn-role { background-color: #1a1f36; color: white; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; }
+    .btn-role:hover { background-color: #2d325a; color: white; }
+</style>
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold" style="color: #1a1f36;">ArtSchool CRM</h1>
+    <p class="lead text-muted">Выберите роль для входа</p>
+</div>
+<div class="row justify-content-center g-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="role-card">
+            <div class="role-icon">⚙️</div>
+            <h4>Администратор</h4>
+            <a href="/auth/login" class="btn-role mt-3">Войти</a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="role-card">
+            <div class="role-icon">📊</div>
+            <h4>Руководитель</h4>
+            <a href="/auth/login" class="btn-role mt-3">Войти</a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="role-card">
+            <div class="role-icon">🎨</div>
+            <h4>Преподаватель</h4>
+            <a href="/auth/login" class="btn-role mt-3">Войти</a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="role-card">
+            <div class="role-icon">👩‍🎓</div>
+            <h4>Ученик</h4>
+            <a href="/auth/login" class="btn-role mt-3">Войти</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

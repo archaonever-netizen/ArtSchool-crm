@@ -1,3 +1,8 @@
-# app/student/__init__.py
-from flask import Blueprint
-student_bp = Blueprint('student', __name__, template_folder='../templates/student')
+from flask import render_template, session, redirect, url_for
+from app.student import student_bp
+
+@student_bp.route('/')
+def dashboard():
+    if session.get('role') != 'student':
+        return redirect(url_for('auth.login'))
+    return render_template('student/dashboard.html')
