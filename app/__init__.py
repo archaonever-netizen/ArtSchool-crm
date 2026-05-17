@@ -1,5 +1,5 @@
 import os
-from flask import Flask, session, redirect, url_for, render_template
+from flask import Flask, session, redirect, url_for, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
 from supabase import create_client, Client
