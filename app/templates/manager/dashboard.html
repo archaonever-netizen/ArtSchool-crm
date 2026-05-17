@@ -2,6 +2,35 @@
 {% block title %}Панель руководителя{% endblock %}
 {% block content %}
 <div class="row g-3">
+    <div class="col-md-4">
+        <a href="/manager/adjustments" class="text-decoration-none">
+            <div class="card p-4 text-center">
+                <i class="bi bi-list-check display-4 text-primary"></i>
+                <h5 class="mt-2">Запросы на корректировку</h5>
+                <p class="text-muted">Просмотр и обработка AdjustmentRequest</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="#" class="text-decoration-none disabled">
+            <div class="card p-4 text-center opacity-50">
+                <i class="bi bi-calendar-event display-4 text-primary"></i>
+                <h5 class="mt-2">Календарь</h5>
+                <p class="text-muted">Расписание и события (скоро)</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="#" class="text-decoration-none disabled">
+            <div class="card p-4 text-center opacity-50">
+                <i class="bi bi-kanban display-4 text-primary"></i>
+                <h5 class="mt-2">Задачи</h5>
+                <p class="text-muted">Управление задачами команды (скоро)</p>
+            </div>
+        </a>
+    </div>
+</div>
+<div class="row mt-4">
     <div class="col-12 col-md-3">
         <div class="card shadow-sm">
             <div class="card-body">

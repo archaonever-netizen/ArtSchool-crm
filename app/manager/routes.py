@@ -103,3 +103,10 @@ def manager_reject_request(req_id):
         db.session.add(note)
         db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+@manager_bp.route('/adjustments')
+def adjustments_page():
+    if session.get('role') != 'manager':
+        return redirect(url_for('auth.login'))
+    return render_template('manager/adjustments.html')
