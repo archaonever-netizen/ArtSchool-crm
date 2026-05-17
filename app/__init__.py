@@ -45,27 +45,27 @@ def create_app():
 
     # Автоматическое создание таблиц и админа по умолчанию
     with app.app_context():
-    db.create_all()
-    from app.models import User
+        db.create_all()
+        from app.models import User
 
-    # Создаём всех тестовых пользователей при первом запуске
-    default_users = [
-        {'username': 'admin',   'password': 'admin123',    'role': 'admin'},
-        {'username': 'manager', 'password': 'manager123',  'role': 'manager'},
-        {'username': 'teacher', 'password': 'teacher123',  'role': 'teacher'},
-        {'username': 'student', 'password': 'student123',  'role': 'student'},
-    ]
+        # Создаём всех тестовых пользователей при первом запуске
+        default_users = [
+            {'username': 'admin',   'password': 'admin123',    'role': 'admin'},
+            {'username': 'manager', 'password': 'manager123',  'role': 'manager'},
+            {'username': 'teacher', 'password': 'teacher123',  'role': 'teacher'},
+            {'username': 'student', 'password': 'student123',  'role': 'student'},
+        ]
 
-    for u in default_users:
-        if not User.query.filter_by(username=u['username']).first():
-            user = User(
-                username=u['username'],
-                password_hash=generate_password_hash(u['password']),
-                role=u['role']
-            )
-            db.session.add(user)
+        for u in default_users:
+            if not User.query.filter_by(username=u['username']).first():
+                user = User(
+                    username=u['username'],
+                    password_hash=generate_password_hash(u['password']),
+                    role=u['role']
+                )
+                db.session.add(user)
 
-    db.session.commit()
+        db.session.commit()
 
     # Вспомогательный декоратор для проверки входа
     @app.before_request
