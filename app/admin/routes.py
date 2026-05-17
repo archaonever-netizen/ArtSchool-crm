@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from app.admin import admin_bp
 from app import db
 from app.models import User, Student, Tariff
-from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program
+from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program, AdjustmentRequest
 from datetime import datetime
 
 
@@ -101,6 +101,53 @@ def tariffs_api():
         return jsonify({'error': 'Unauthorized'}), 401
     tariffs = Tariff.query.filter_by(is_archived=False).all()
     return jsonify([{'id': t.id, 'name': t.name, 'lessons_count': t.lessons_count, 'price': t.price} for t in tariffs])
+
+
+@admin_bp.route('/api/adjustment-requests', methods=['GET', 'POST'])
+def admin_adjustment_requests_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    if request.method == 'GET':
+        reqs = AdjustmentRequest.query.order_by(AdjustmentRequest.created_at.desc()).all()
+        out = []
+        for r in reqs:
+            student = Student.query.get(r.student_id) if r.student_id else None
+            creator = User.query.get(r.created_by) if r.created_by else None
+            out.append({
+                'id': r.id,
+                'student_id': r.student_id,
+                'student_name': student.full_name if student else None,
+                'type': r.type,
+                'amount': r.amount,
+                'reason': r.reason,
+                'status': r.status,
+                'created_by': r.created_by,
+                'created_by_name': creator.username if creator else None,
+                'created_at': r.created_at.isoformat()
+            })
+        return jsonify(out)
+
+    # POST - create new request (admin creates on behalf)
+    data = request.get_json() or request.form
+    student_id = data.get('student_id')
+    rtype = data.get('type')
+    amount = int(data.get('amount') or 0)
+    reason = data.get('reason')
+    creator_id = session.get('user_id')
+    if not student_id or not rtype or amount == 0:
+        return jsonify({'error': 'student_id, type and amount required'}), 400
+    req = AdjustmentRequest(student_id=student_id, type=rtype, amount=amount, reason=reason, created_by=creator_id)
+    db.session.add(req)
+    db.session.commit()
+
+    # notify first manager
+    mgr = User.query.filter_by(role='manager').first()
+    if mgr:
+        note = Notification(user_id=mgr.id, message=f'Новый запрос на корректировку для ученика ID {student_id}: {rtype} {amount}.')
+        db.session.add(note)
+        db.session.commit()
+
+    return jsonify({'status': 'ok', 'id': req.id})
 
 
 @admin_bp.route('/api/teachers', methods=['GET'])
