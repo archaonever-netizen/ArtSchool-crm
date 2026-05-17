@@ -1,6 +1,65 @@
 {% extends "base.html" %}
-{% block title %}Руководитель{% endblock %}
+{% block title %}Панель руководителя{% endblock %}
 {% block content %}
-<h1>Панель руководителя</h1>
-<p>Здесь будет дашборд руководителя.</p>
+<div class="row g-3">
+    <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Всего учеников</h6>
+                <h2 id="totalStudents" class="card-title">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Активных занятий</h6>
+                <h2 id="activeLessons" class="card-title">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Доход</h6>
+                <h2 id="income" class="card-title">0</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Расход</h6>
+                <h2 id="expense" class="card-title">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12 col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Прибыль</h6>
+                <h2 id="profit" class="card-title">0</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadManagerDashboard(){
+    const res = await fetch('/manager/api/dashboard');
+    if (!res.ok) return;
+    const data = await res.json();
+    document.getElementById('totalStudents').textContent = data.total_students;
+    document.getElementById('activeLessons').textContent = data.active_lessons;
+    document.getElementById('income').textContent = data.income.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('expense').textContent = data.expense.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('profit').textContent = data.profit.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+document.addEventListener('DOMContentLoaded', loadManagerDashboard);
+</script>
 {% endblock %}

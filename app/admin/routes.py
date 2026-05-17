@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from app.admin import admin_bp
 from app import db
 from app.models import User, Student, Tariff
-from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification
+from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program
 from datetime import datetime
 
 
@@ -111,6 +111,23 @@ def teachers_api():
     return jsonify([{'id': t.id, 'full_name': t.full_name, 'phone': t.phone} for t in teachers])
 
 
+@admin_bp.route('/api/lesson-templates', methods=['GET'])
+def lesson_templates_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    templates = LessonTemplate.query.all()
+    result = []
+    for item in templates:
+        program = Program.query.get(item.program_id) if item.program_id else None
+        result.append({
+            'id': item.id,
+            'title': item.title,
+            'program_id': item.program_id,
+            'program_name': program.name if program else None
+        })
+    return jsonify(result)
+
+
 @admin_bp.route('/schedule')
 def schedule_page():
     if session.get('role') != 'admin':
@@ -125,12 +142,17 @@ def lessons_list_api():
     lessons = Lesson.query.all()
     out = []
     for l in lessons:
+        teacher_name = l.teacher.full_name if l.teacher else None
+        template = LessonTemplate.query.get(l.lesson_template_id) if l.lesson_template_id else None
         out.append({
             'id': l.id,
             'title': l.title,
             'start': l.datetime_start.isoformat(),
             'end': l.datetime_end.isoformat(),
             'teacher_id': l.teacher_id,
+            'teacher_name': teacher_name,
+            'lesson_template_id': l.lesson_template_id,
+            'lesson_template_title': template.title if template else None,
             'max_students': l.max_students,
             'status': l.status,
             'enrolled_count': l.enrollments.count()
@@ -170,12 +192,16 @@ def lesson_detail_api(lesson_id):
     if not lesson:
         return jsonify({'error': 'Not found'}), 404
     if request.method == 'GET':
+        template = LessonTemplate.query.get(lesson.lesson_template_id) if lesson.lesson_template_id else None
         return jsonify({
             'id': lesson.id,
             'title': lesson.title,
             'start': lesson.datetime_start.isoformat(),
             'end': lesson.datetime_end.isoformat(),
             'teacher_id': lesson.teacher_id,
+            'teacher_name': lesson.teacher.full_name if lesson.teacher else None,
+            'lesson_template_id': lesson.lesson_template_id,
+            'lesson_template_title': template.title if template else None,
             'max_students': lesson.max_students,
             'status': lesson.status,
             'enrolled_count': lesson.enrollments.count()

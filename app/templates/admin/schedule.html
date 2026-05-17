@@ -22,27 +22,33 @@
             <input type="hidden" id="lessonId">
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Название</label>
+                    <label class="form-label">Название <i class="bi bi-question-circle" title="Имя занятия для календаря"></i></label>
                     <input class="form-control" id="lessonTitle">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Преподаватель</label>
-                    <select id="teacherSelect" class="form-select"></select>
+                    <label class="form-label">Тема занятия <i class="bi bi-question-circle" title="Выберите шаблон урока из программы"></i></label>
+                    <select id="templateSelect" class="form-select"></select>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Начало (ISO)</label>
+                    <label class="form-label">Преподаватель <i class="bi bi-question-circle" title="Кто будет вести занятие"></i></label>
+                    <select id="teacherSelect" class="form-select"></select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Макс. учеников <i class="bi bi-question-circle" title="Максимальное количество учеников на занятии"></i></label>
+                    <input class="form-control" id="lessonMax" type="number" value="10">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Начало <i class="bi bi-question-circle" title="Дата и время начала занятия"></i></label>
                     <input class="form-control" id="lessonStart" type="datetime-local">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label class="form-label">Конец (ISO)</label>
+                    <label class="form-label">Конец <i class="bi bi-question-circle" title="Дата и время окончания занятия"></i></label>
                     <input class="form-control" id="lessonEnd" type="datetime-local">
                 </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Макс. учеников</label>
-                <input class="form-control" id="lessonMax" type="number" value="10">
             </div>
         </form>
       </div>
@@ -80,21 +86,41 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
 <script>
 let calendar;
+let teachers = [];
+let templates = [];
+
 async function fetchTeachers(){
-    // simple fetch from /admin/api/teachers if exists; fallback to building from Teacher model by API not present -> call /admin/api/teachers if implemented
     try{
         const res = await fetch('/admin/api/teachers');
-        if (res.ok){
-            return await res.json();
-        }
-    }catch(e){ }
+        if (res.ok) return await res.json();
+    }catch(e){ console.error(e); }
     return [];
+}
+
+async function fetchTemplates(){
+    try{
+        const res = await fetch('/admin/api/lesson-templates');
+        if (res.ok) return await res.json();
+    }catch(e){ console.error(e); }
+    return [];
+}
+
+function renderSelectOptions(items, element, emptyLabel){
+    element.innerHTML = `<option value="">${emptyLabel}</option>`;
+    items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = item.program_name ? `${item.title} — ${item.program_name}` : item.title;
+        element.appendChild(opt);
+    });
 }
 
 async function loadCalendar(){
     const calendarEl = document.getElementById('calendar');
-    const events = (await fetch('/admin/api/lessons')).json();
-    const teachers = await fetchTeachers();
+    teachers = await fetchTeachers();
+    templates = await fetchTemplates();
+    renderSelectOptions(templates, document.getElementById('templateSelect'), '-- выбрать тему --');
+    renderSelectOptions(teachers, document.getElementById('teacherSelect'), '-- выбрать преподавателя --');
 
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -104,19 +130,28 @@ async function loadCalendar(){
             try{
                 const res = await fetch('/admin/api/lessons');
                 const data = await res.json();
-                successCallback(data.map(item=>({id:item.id,title:item.title,start:item.start,end:item.end,extendedProps:{teacher_id:item.teacher_id}})));
-            }catch(e){failureCallback(e)}
+                successCallback(data.map(item => ({
+                    id: item.id,
+                    title: item.lesson_template_title ? `${item.lesson_template_title}` : item.title,
+                    start: item.start,
+                    end: item.end,
+                    extendedProps: {
+                        teacher_id: item.teacher_id,
+                        teacher_name: item.teacher_name,
+                        enrolled_count: item.enrolled_count
+                    }
+                })));
+            }catch(e){
+                console.error(e);
+                failureCallback(e);
+            }
         },
         select: function(info){
             openLessonModal({start: info.startStr, end: info.endStr});
         },
         eventClick: async function(info){
             const id = info.event.id;
-            // fetch lesson details
-            const res = await fetch('/admin/api/lesson/' + id);
-            if (!res.ok) return alert('Ошибка загрузки занятия');
-            const lesson = await res.json();
-            openLessonModal(lesson);
+            openAttendanceModal(id);
         }
     });
     calendar.render();
@@ -126,58 +161,77 @@ function openLessonModal(data){
     const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
     document.getElementById('lessonId').value = data.id || '';
     document.getElementById('lessonTitle').value = data.title || '';
+    document.getElementById('templateSelect').value = data.lesson_template_id || '';
+    document.getElementById('teacherSelect').value = data.teacher_id || '';
     if (data.start){
-        // convert ISO to local datetime-local value
         document.getElementById('lessonStart').value = data.start.substring(0,16);
-    } else document.getElementById('lessonStart').value = '';
+    } else {
+        document.getElementById('lessonStart').value = '';
+    }
     if (data.end){
         document.getElementById('lessonEnd').value = data.end.substring(0,16);
-    } else document.getElementById('lessonEnd').value = '';
+    } else {
+        document.getElementById('lessonEnd').value = '';
+    }
     document.getElementById('lessonMax').value = data.max_students || 10;
     document.getElementById('deleteLessonBtn').style.display = data.id ? 'inline-block' : 'none';
     modal.show();
 }
 
+async function saveLesson(){
+    const id = document.getElementById('lessonId').value;
+    const payload = {
+        title: document.getElementById('lessonTitle').value,
+        lesson_template_id: document.getElementById('templateSelect').value || null,
+        teacher_id: document.getElementById('teacherSelect').value || null,
+        datetime_start: document.getElementById('lessonStart').value,
+        datetime_end: document.getElementById('lessonEnd').value,
+        max_students: document.getElementById('lessonMax').value
+    };
+    if (!payload.title || !payload.datetime_start || !payload.datetime_end) {
+        return alert('Заполните обязательные поля');
+    }
+    const url = id ? `/admin/api/lesson/${id}` : '/admin/api/lesson/add';
+    const method = id ? 'PATCH' : 'POST';
+    const res = await fetch(url, {method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    if (res.ok){
+        bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
+        calendar.refetchEvents();
+    } else {
+        const error = await res.json();
+        alert(error.error || 'Ошибка при сохранении занятия');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async ()=>{
     await loadCalendar();
-    document.getElementById('refreshCalendar').addEventListener('click', ()=> calendar.refetchEvents());
-
-    const saveBtn = document.getElementById('saveLessonBtn');
-    saveBtn.addEventListener('click', async ()=>{
-        const id = document.getElementById('lessonId').value;
-        const payload = {
-            title: document.getElementById('lessonTitle').value,
-            datetime_start: document.getElementById('lessonStart').value,
-            datetime_end: document.getElementById('lessonEnd').value,
-            max_students: document.getElementById('lessonMax').value
-        };
-        if (!payload.title || !payload.datetime_start || !payload.datetime_end) return alert('Заполните поля');
-        if (!id){
-            const res = await fetch('/admin/api/lesson/add', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-            if (res.ok){ bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide(); calendar.refetchEvents(); } else { const e=await res.json(); alert(e.error||'Ошибка'); }
-        } else {
-            const res = await fetch('/admin/api/lesson/' + id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-            if (res.ok){ bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide(); calendar.refetchEvents(); } else { const e=await res.json(); alert(e.error||'Ошибка'); }
-        }
-    });
-
+    document.getElementById('refreshCalendar').addEventListener('click', () => calendar.refetchEvents());
+    document.getElementById('saveLessonBtn').addEventListener('click', saveLesson);
     document.getElementById('deleteLessonBtn').addEventListener('click', async ()=>{
         const id = document.getElementById('lessonId').value;
         if (!id) return;
         if (!confirm('Удалить занятие?')) return;
-        const res = await fetch('/admin/api/lesson/' + id, {method:'DELETE'});
-        if (res.ok){ bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide(); calendar.refetchEvents(); } else { const e=await res.json(); alert(e.error||'Ошибка'); }
+        const res = await fetch(`/admin/api/lesson/${id}`, {method:'DELETE'});
+        if (res.ok){
+            bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
+            calendar.refetchEvents();
+        } else {
+            const error = await res.json();
+            alert(error.error || 'Ошибка при удалении занятия');
+        }
     });
 });
 
 async function openAttendanceModal(lessonId){
-    const res = await fetch('/admin/api/lesson/' + lessonId + '/students');
-    if (!res.ok) return alert('Ошибка загрузки списка');
+    const res = await fetch(`/admin/api/lesson/${lessonId}/students`);
+    if (!res.ok) return alert('Ошибка загрузки списка студентов');
     const data = await res.json();
     const list = document.getElementById('attendanceList');
     list.innerHTML = '';
-    if (!data.length) list.innerHTML = '<div class="text-muted">Нет записавшихся</div>';
-    data.forEach(item =>{
+    if (!data.length) {
+        list.innerHTML = '<div class="text-muted">Нет записавшихся</div>';
+    }
+    data.forEach(item => {
         const div = document.createElement('div');
         div.className = 'list-group-item d-flex justify-content-between align-items-center';
         div.innerHTML = `
@@ -194,19 +248,19 @@ async function openAttendanceModal(lessonId){
     });
     const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
     modal.show();
-
-    list.querySelectorAll('button').forEach(btn=>{
-        btn.addEventListener('click', async (e)=>{
-            const enrollId = btn.getAttribute('data-enroll');
-            const action = btn.getAttribute('data-action');
-            const status = action === 'attended' ? 'attended' : 'missed';
-            const res = await fetch('/admin/api/lesson/' + lessonId + '/attendance', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({enrollment_id: enrollId, status})});
-            if (res.ok){
+    list.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', async ()=>{
+            const enrollmentId = btn.getAttribute('data-enroll');
+            const status = btn.getAttribute('data-action') === 'attended' ? 'attended' : 'missed';
+            const response = await fetch(`/admin/api/lesson/${lessonId}/attendance`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({enrollment_id: enrollmentId, status})});
+            if (response.ok) {
                 btn.closest('.list-group-item').classList.add('opacity-50');
-            } else { const e = await res.json(); alert(e.error || 'Ошибка'); }
+            } else {
+                const error = await response.json();
+                alert(error.error || 'Ошибка при сохранении посещаемости');
+            }
         });
     });
 }
-
 </script>
 {% endblock %}

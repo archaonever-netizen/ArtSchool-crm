@@ -1,6 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Администратор{% endblock %}
 {% block content %}
-<h1>Панель администратора</h1>
-<p>Здесь будет функционал администратора.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Панель администратора</h1>
+        <p class="text-muted mb-0">Здесь собраны основные административные инструменты.</p>
+    </div>
+    <a href="/admin/students" class="btn btn-primary">Перейти к студентам</a>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Управление студентами</h5>
+                <p class="card-text">Добавляйте, редактируйте и удаляйте учеников, назначайте тарифы.</p>
+                <a href="/admin/students" class="btn btn-outline-primary">Открыть</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Расписание занятий</h5>
+                <p class="card-text">Создавайте и редактируйте занятия в календаре.</p>
+                <a href="/admin/schedule" class="btn btn-outline-primary">Открыть</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Платежи</h5>
+                <p class="card-text">Раздел на стадии разработки — скоро появится.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

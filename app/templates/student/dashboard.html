@@ -1,6 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Ученик{% endblock %}
 {% block content %}
-<h1>Личный кабинет ученика</h1>
-<p>Расписание и дорожная карта.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Личный кабинет ученика</h1>
+        <p class="text-muted mb-0">Здесь появится расписание, прогресс и текущий тариф.</p>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Расписание</h5>
+                <p class="card-text">Доступные занятия и запись на них.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Дорожная карта</h5>
+                <p class="card-text">Прогресс, достижения и монеты.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Тариф</h5>
+                <p class="card-text">Информация о текущем пакете и остатке занятий.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

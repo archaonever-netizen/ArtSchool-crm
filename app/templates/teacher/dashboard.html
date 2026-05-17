@@ -1,6 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Преподаватель{% endblock %}
 {% block content %}
-<h1>Кабинет преподавателя</h1>
-<p>Расписание и подготовка к занятиям.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>Кабинет преподавателя</h1>
+        <p class="text-muted mb-0">Здесь появятся расписание, подготовка к занятиям и профиль.</p>
+    </div>
+</div>
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Расписание</h5>
+                <p class="card-text">Просмотр своих занятий и их статуса.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Подготовка</h5>
+                <p class="card-text">Заметки к занятиям и учебные материалы.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">Мои ученики</h5>
+                <p class="card-text">Список учеников, посещающих ваши занятия.</p>
+                <button class="btn btn-outline-secondary" disabled>В работе</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
