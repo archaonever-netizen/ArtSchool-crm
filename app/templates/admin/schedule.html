@@ -55,6 +55,24 @@
   </div>
 </div>
 
+<!-- Attendance Modal -->
+<div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Список записавшихся</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="attendanceList" class="list-group"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -151,5 +169,44 @@ document.addEventListener('DOMContentLoaded', async ()=>{
         if (res.ok){ bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide(); calendar.refetchEvents(); } else { const e=await res.json(); alert(e.error||'Ошибка'); }
     });
 });
+
+async function openAttendanceModal(lessonId){
+    const res = await fetch('/admin/api/lesson/' + lessonId + '/students');
+    if (!res.ok) return alert('Ошибка загрузки списка');
+    const data = await res.json();
+    const list = document.getElementById('attendanceList');
+    list.innerHTML = '';
+    if (!data.length) list.innerHTML = '<div class="text-muted">Нет записавшихся</div>';
+    data.forEach(item =>{
+        const div = document.createElement('div');
+        div.className = 'list-group-item d-flex justify-content-between align-items-center';
+        div.innerHTML = `
+            <div>
+                <div><strong>${item.full_name || item.phone}</strong></div>
+                <div class="small text-muted">${item.phone || ''}</div>
+            </div>
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-success" data-enroll="${item.enrollment_id}" data-action="attended">Пришёл</button>
+                <button class="btn btn-warning" data-enroll="${item.enrollment_id}" data-action="missed">Не пришёл</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+    const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    modal.show();
+
+    list.querySelectorAll('button').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+            const enrollId = btn.getAttribute('data-enroll');
+            const action = btn.getAttribute('data-action');
+            const status = action === 'attended' ? 'attended' : 'missed';
+            const res = await fetch('/admin/api/lesson/' + lessonId + '/attendance', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({enrollment_id: enrollId, status})});
+            if (res.ok){
+                btn.closest('.list-group-item').classList.add('opacity-50');
+            } else { const e = await res.json(); alert(e.error || 'Ошибка'); }
+        });
+    });
+}
+
 </script>
 {% endblock %}

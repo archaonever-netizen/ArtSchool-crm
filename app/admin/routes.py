@@ -103,6 +103,14 @@ def tariffs_api():
     return jsonify([{'id': t.id, 'name': t.name, 'lessons_count': t.lessons_count, 'price': t.price} for t in tariffs])
 
 
+@admin_bp.route('/api/teachers', methods=['GET'])
+def teachers_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    teachers = Teacher.query.all()
+    return jsonify([{'id': t.id, 'full_name': t.full_name, 'phone': t.phone} for t in teachers])
+
+
 @admin_bp.route('/schedule')
 def schedule_page():
     if session.get('role') != 'admin':
