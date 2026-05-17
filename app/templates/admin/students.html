@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Студенты{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Студенты</h3>
+    <button class="btn btn-primary" id="addStudentBtn">Добавить</button>
+</div>
+<div class="table-responsive">
+    <table class="table table-striped" id="studentsTable">
+        <thead>
+            <tr>
+                <th>Имя</th>
+                <th>Телефон</th>
+                <th>Тариф</th>
+                <th>Остаток</th>
+                <th>Монеты</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="studentModalTitle">Добавить студента</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="studentForm">
+            <input type="hidden" id="studentId">
+            <div class="mb-3">
+                <label class="form-label">Имя <i class="bi bi-question-circle" title="Полное имя ученика"></i></label>
+                <input type="text" id="fullName" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Телефон (логин) <i class="bi bi-question-circle" title="Телефон используется как логин"></i></label>
+                <input type="text" id="phone" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Тариф <i class="bi bi-question-circle" title="Выберите тариф для ученика"></i></label>
+                <select id="tariffSelect" class="form-select"></select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Начальное количество занятий <i class="bi bi-question-circle" title="Сколько занятий у ученика изначально"></i></label>
+                <input type="number" id="initialLessons" class="form-control" value="0">
+            </div>
+            <div class="mb-3" id="passwordRow">
+                <label class="form-label">Пароль <i class="bi bi-question-circle" title="Пароль для входа ученика"></i></label>
+                <input type="password" id="password" class="form-control">
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        <button type="button" class="btn btn-primary" id="saveStudentBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function fetchStudents(){
+    const res = await fetch('/admin/api/students');
+    const data = await res.json();
+    const tbody = document.querySelector('#studentsTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${s.full_name || ''}</td>
+            <td>${s.phone}</td>
+            <td>${s.tariff || ''}</td>
+            <td>${s.lessons_remaining}</td>
+            <td>${s.coins}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" data-id="${s.id}" data-action="edit">Ред.</button>
+                <button class="btn btn-sm btn-outline-danger" data-id="${s.id}" data-action="delete">Удал.</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function fetchTariffs(){
+    const res = await fetch('/admin/api/tariffs');
+    const data = await res.json();
+    const sel = document.getElementById('tariffSelect');
+    sel.innerHTML = '<option value="">-- без тарифа --</option>';
+    data.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = `${t.name} (${t.lessons_count} зан., ${t.price} руб.)`;
+        sel.appendChild(opt);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () =>{
+    await fetchTariffs();
+    await fetchStudents();
+
+    const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+
+    document.getElementById('addStudentBtn').addEventListener('click', ()=>{
+        document.getElementById('studentModalTitle').textContent = 'Добавить студента';
+        document.getElementById('studentId').value = '';
+        document.getElementById('fullName').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('initialLessons').value = 0;
+        document.getElementById('passwordRow').style.display = 'block';
+        studentModal.show();
+    });
+
+    document.getElementById('saveStudentBtn').addEventListener('click', async ()=>{
+        const id = document.getElementById('studentId').value;
+        const payload = {
+            full_name: document.getElementById('fullName').value,
+            phone: document.getElementById('phone').value,
+            tariff_id: document.getElementById('tariffSelect').value || null,
+            initial_lessons: document.getElementById('initialLessons').value,
+            password: document.getElementById('password').value
+        };
+        if (!payload.phone){ alert('Телефон обязателен'); return; }
+        if (!id){
+            const res = await fetch('/admin/api/students', {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+            if (res.ok){ studentModal.hide(); await fetchStudents(); } else { const e = await res.json(); alert(e.error || 'Ошибка'); }
+        } else {
+            const res = await fetch('/admin/api/students/' + id, {method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+            if (res.ok){ studentModal.hide(); await fetchStudents(); } else { const e = await res.json(); alert(e.error || 'Ошибка'); }
+        }
+    });
+
+    document.querySelector('#studentsTable').addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (action === 'edit'){
+            const res = await fetch('/admin/api/students');
+            const data = await res.json();
+            const s = data.find(x=>x.id==id);
+            if (!s) return alert('Не найден');
+            document.getElementById('studentModalTitle').textContent = 'Редактировать студента';
+            document.getElementById('studentId').value = s.id;
+            document.getElementById('fullName').value = s.full_name || '';
+            document.getElementById('phone').value = s.phone;
+            document.getElementById('tariffSelect').value = s.tariff_id || '';
+            document.getElementById('initialLessons').value = s.lessons_remaining || 0;
+            document.getElementById('passwordRow').style.display = 'none';
+            studentModal.show();
+        }
+        if (action === 'delete'){
+            if (!confirm('Удалить студента?')) return;
+            const res = await fetch('/admin/api/students/' + id, {method: 'DELETE'});
+            if (res.ok) await fetchStudents(); else { const e = await res.json(); alert(e.error || 'Ошибка'); }
+        }
+    });
+});
+</script>
+{% endblock %}

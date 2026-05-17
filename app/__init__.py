@@ -32,6 +32,9 @@ def create_app():
     from app.student.routes import student_bp
     app.register_blueprint(student_bp, url_prefix='/student')
 
+    from app.notifications.routes import notifications_bp
+    app.register_blueprint(notifications_bp, url_prefix='/notifications')
+
     # Главная страница выбора ролей
     @app.route('/')
     def index():
@@ -41,6 +44,7 @@ def create_app():
     with app.app_context():
         db.create_all()
         from app.models import User
+        from app.models import Notification
         if not User.query.filter_by(username='admin').first():
             admin_user = User(
                 username='admin',
