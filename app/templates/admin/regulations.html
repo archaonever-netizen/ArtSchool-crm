@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Регламенты{% endblock %}
+{% block content %}
+<h1 class="mb-4">Регламенты</h1>
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#regModal">Добавить регламент</button>
+</div>
+<ul class="list-group" id="regsList"></ul>
+
+<!-- Modal -->
+<div class="modal fade" id="regModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Регламент</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="regForm">
+          <div class="mb-3">
+            <label class="form-label">Заголовок</label>
+            <input name="title" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Содержимое</label>
+            <textarea name="content" rows="10" class="form-control"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+        <button type="button" class="btn btn-primary" id="saveRegBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadRegs(){
+    const res = await fetch('/admin/api/regulations');
+    const data = await res.json();
+    const el = document.getElementById('regsList');
+    el.innerHTML = '';
+    data.forEach(r=>{
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-start';
+        li.innerHTML = `<div><h5>${r.title}</h5><div class="text-muted">${r.updated_at}</div><p>${r.content ? r.content.substring(0,200) : ''}</p></div><div><button class="btn btn-sm btn-danger" onclick="deleteReg(${r.id})">Удалить</button></div>`;
+        el.appendChild(li);
+    });
+}
+
+async function deleteReg(id){
+    if(!confirm('Удалить регламент?')) return;
+    await fetch('/admin/api/regulations/'+id, {method:'DELETE'});
+    loadRegs();
+}
+
+document.getElementById('saveRegBtn').addEventListener('click', async ()=>{
+    const form = document.getElementById('regForm');
+    const fd = new FormData(form);
+    const body = {};
+    fd.forEach((v,k)=>body[k]=v);
+    const res = await fetch('/admin/api/regulations', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+    if(res.ok){
+        var modalEl = document.getElementById('regModal');
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        modal.hide();
+        loadRegs();
+    } else {
+        alert('Ошибка');
+    }
+});
+
+loadRegs();
+</script>
+{% endblock %}

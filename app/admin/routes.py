@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash
 from app.admin import admin_bp
 from app import db
 from app.models import User, Student, Tariff
-from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program, AdjustmentRequest
+from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program, AdjustmentRequest, Payment, Regulation
 from datetime import datetime
 
 
@@ -313,3 +313,133 @@ def lesson_attendance_api(lesson_id):
         db.session.add(note)
     db.session.commit()
     return jsonify({'status': 'ok'})
+
+
+# ----------------- PAYMENTS (Admin) -----------------
+@admin_bp.route('/payments')
+def payments_page():
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.login'))
+    return render_template('admin/payments.html')
+
+
+@admin_bp.route('/api/payments', methods=['GET', 'POST'])
+def payments_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    if request.method == 'GET':
+        payments = Payment.query.order_by(Payment.date.desc()).all()
+        out = []
+        for p in payments:
+            creator = User.query.get(p.created_by) if p.created_by else None
+            out.append({
+                'id': p.id,
+                'type': p.type,
+                'amount': p.amount,
+                'description': p.description,
+                'date': p.date.isoformat(),
+                'created_by': p.created_by,
+                'created_by_name': creator.username if creator else None
+            })
+        return jsonify(out)
+
+    # POST
+    data = request.get_json() or request.form
+    ptype = data.get('type')
+    amount = float(data.get('amount') or 0)
+    description = data.get('description')
+    date_str = data.get('date')
+    try:
+        dt = datetime.fromisoformat(date_str).date() if date_str else datetime.utcnow().date()
+    except Exception:
+        dt = datetime.utcnow().date()
+    creator_id = session.get('user_id')
+    if ptype not in ('income', 'expense') or amount == 0:
+        return jsonify({'error': 'type (income|expense) and amount required'}), 400
+    p = Payment(type=ptype, amount=amount, description=description, date=dt, created_by=creator_id)
+    db.session.add(p)
+    db.session.commit()
+    return jsonify({'status': 'ok', 'id': p.id})
+
+
+@admin_bp.route('/api/payments/<int:pid>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
+def payment_detail_api(pid):
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    p = Payment.query.get(pid)
+    if not p:
+        return jsonify({'error': 'Not found'}), 404
+    if request.method == 'GET':
+        creator = User.query.get(p.created_by) if p.created_by else None
+        return jsonify({
+            'id': p.id,
+            'type': p.type,
+            'amount': p.amount,
+            'description': p.description,
+            'date': p.date.isoformat(),
+            'created_by': p.created_by,
+            'created_by_name': creator.username if creator else None
+        })
+    if request.method in ('PUT', 'PATCH'):
+        data = request.get_json() or request.form
+        p.type = data.get('type', p.type)
+        p.amount = float(data.get('amount', p.amount))
+        p.description = data.get('description', p.description)
+        if data.get('date'):
+            try:
+                p.date = datetime.fromisoformat(data.get('date')).date()
+            except Exception:
+                pass
+        db.session.commit()
+        return jsonify({'status': 'ok'})
+    # DELETE
+    db.session.delete(p)
+    db.session.commit()
+    return jsonify({'status': 'deleted'})
+
+
+# ----------------- REGULATIONS -----------------
+@admin_bp.route('/regulations')
+def regulations_page():
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.login'))
+    return render_template('admin/regulations.html')
+
+
+@admin_bp.route('/api/regulations', methods=['GET', 'POST'])
+def regulations_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    if request.method == 'GET':
+        regs = Regulation.query.order_by(Regulation.updated_at.desc()).all()
+        return jsonify([{'id': r.id, 'title': r.title, 'content': r.content, 'updated_at': r.updated_at.isoformat()} for r in regs])
+    data = request.get_json() or request.form
+    title = data.get('title')
+    content = data.get('content')
+    if not title:
+        return jsonify({'error': 'title required'}), 400
+    reg = Regulation(title=title, content=content)
+    db.session.add(reg)
+    db.session.commit()
+    return jsonify({'status': 'ok', 'id': reg.id})
+
+
+@admin_bp.route('/api/regulations/<int:rid>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
+def regulation_detail_api(rid):
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    r = Regulation.query.get(rid)
+    if not r:
+        return jsonify({'error': 'Not found'}), 404
+    if request.method == 'GET':
+        return jsonify({'id': r.id, 'title': r.title, 'content': r.content, 'updated_at': r.updated_at.isoformat()})
+    if request.method in ('PUT', 'PATCH'):
+        data = request.get_json() or request.form
+        r.title = data.get('title', r.title)
+        r.content = data.get('content', r.content)
+        r.updated_at = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'status': 'ok'})
+    db.session.delete(r)
+    db.session.commit()
+    return jsonify({'status': 'deleted'})
