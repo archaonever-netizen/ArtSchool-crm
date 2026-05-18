@@ -4,77 +4,120 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>ArtSchool CRM - {% block title %}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.4/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='design-system.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/">ArtSchool CRM</a>
-            {% if session.role %}
-            <div class="d-flex align-items-center gap-3">
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-light position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-bell"></i>
-                        <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notificationDropdown" style="min-width: 320px;">
-                        <li class="d-flex justify-content-between align-items-center mb-2">
-                            <strong class="me-auto">Уведомления</strong>
-                            <button class="btn btn-sm btn-link" id="markAllReadButton" type="button">Прочитать все</button>
-                        </li>
-                        <li><div id="notificationList" class="list-group"></div></li>
-                        <li><div id="notificationEmpty" class="text-muted small mt-2">Нет новых уведомлений.</div></li>
-                    </ul>
-                </div>
-                <div class="text-light small">{{ session.role | capitalize }} | <a href="/auth/logout" class="text-light">Выход</a></div>
-            </div>
-            {% endif %}
+{% if session.role %}
+<div class="app-shell">
+    <aside class="sidebar">
+        <div>
+            <a href="{{ url_for('index') }}" class="brand-title">ЕГОРОВЫХ</a>
+            <p class="brand-caption">Центр Академического Художественного Образования</p>
         </div>
+        <nav class="sidebar-nav">
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}" class="nav-link"> <span class="icon"><i class="bi bi-speedometer2"></i></span> Панель</a>
+                <a href="{{ url_for('admin.students_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-people"></i></span> Ученики</a>
+                <a href="{{ url_for('admin.schedule_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-calendar-week"></i></span> Расписание</a>
+                <a href="{{ url_for('admin.payments_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-cash-stack"></i></span> Платежи</a>
+                <a href="{{ url_for('admin.regulations_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-journal-text"></i></span> Регламенты</a>
+                <a href="{{ url_for('admin.inventory_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-box-seam"></i></span> Инвентарь</a>
+                <a href="{{ url_for('admin.sales_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-bar-chart-line"></i></span> Продажи</a>
+            {% elif session.role == 'manager' %}
+                <a href="{{ url_for('manager.dashboard') }}" class="nav-link"> <span class="icon"><i class="bi bi-speedometer2"></i></span> Панель</a>
+                <a href="{{ url_for('manager.adjustments_page') }}" class="nav-link"> <span class="icon"><i class="bi bi-list-check"></i></span> Корректировки</a>
+            {% elif session.role == 'teacher' %}
+                <a href="{{ url_for('teacher.dashboard') }}" class="nav-link"> <span class="icon"><i class="bi bi-person-badge"></i></span> Профиль</a>
+            {% elif session.role == 'student' %}
+                <a href="{{ url_for('student.dashboard') }}" class="nav-link"> <span class="icon"><i class="bi bi-person-circle"></i></span> Профиль</a>
+            {% endif %}
+        </nav>
+    </aside>
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div class="topbar-title">
+                <h1>ArtSchool CRM</h1>
+                <p>Добро пожаловать, {{ session.role | capitalize }}</p>
+            </div>
+            <div class="topbar-actions">
+                <button class="icon-btn" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+                    <i class="bi bi-bell"></i>
+                    <span id="notificationBadge" class="badge" style="display:none;">0</span>
+                </button>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary">Выход</a>
+                <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="notificationDropdown" style="min-width: 300px;">
+                    <li class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Уведомления</strong>
+                        <button class="btn btn-sm btn-secondary" id="markAllReadButton" type="button">Прочитать все</button>
+                    </li>
+                    <li><div id="notificationList" class="list-group"></div></li>
+                    <li><div id="notificationEmpty" class="text-muted small mt-2">Нет новых уведомлений.</div></li>
+                </ul>
+            </div>
+        </header>
+        <main class="dashboard-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <nav class="mobile-nav bottom-nav">
+        {% if session.role == 'admin' %}
+            <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2"></i><span>Панель</span></a>
+            <a href="{{ url_for('admin.students_page') }}" class="nav-link"><i class="bi bi-people"></i><span>Ученики</span></a>
+            <a href="{{ url_for('admin.schedule_page') }}" class="nav-link"><i class="bi bi-calendar-week"></i><span>Расписание</span></a>
+        {% elif session.role == 'manager' %}
+            <a href="{{ url_for('manager.dashboard') }}" class="nav-link"><i class="bi bi-speedometer2"></i><span>Панель</span></a>
+            <a href="{{ url_for('manager.adjustments_page') }}" class="nav-link"><i class="bi bi-list-check"></i><span>Корректировки</span></a>
+        {% elif session.role == 'teacher' %}
+            <a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="bi bi-person-badge"></i><span>Профиль</span></a>
+        {% elif session.role == 'student' %}
+            <a href="{{ url_for('student.dashboard') }}" class="nav-link"><i class="bi bi-person-circle"></i><span>Профиль</span></a>
+        {% endif %}
     </nav>
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% block scripts %}{% endblock %}
-    <script>
-        async function loadNotifications() {
-            const badge = document.getElementById('notificationBadge');
-            const list = document.getElementById('notificationList');
-            const empty = document.getElementById('notificationEmpty');
-            if (!badge || !list) return;
-            try {
-                const response = await fetch('/notifications/');
-                if (!response.ok) return;
-                const items = await response.json();
-                const unread = items.filter(item => !item.read).length;
-                badge.textContent = unread;
-                badge.style.display = unread > 0 ? 'inline-flex' : 'none';
-                list.innerHTML = items.slice(0, 8).map(item => `
-                    <button type="button" class="list-group-item list-group-item-action ${item.read ? '' : 'list-group-item-warning'} text-start" data-id="${item.id}">
-                        <div class="d-flex w-100 justify-content-between">
-                            <p class="mb-1 small text-dark">${item.message}</p>
-                        </div>
-                        <small class="text-muted">${new Date(item.created_at).toLocaleString('ru-RU')}</small>
-                    </button>
-                `).join('');
-                empty.style.display = items.length === 0 ? 'block' : 'none';
-            } catch (error) {
-                console.error('Notification load failed', error);
-            }
+</div>
+{% else %}
+<main class="dashboard-content">
+    {% block content %}{% endblock %}
+</main>
+{% endif %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+<script>
+    async function loadNotifications() {
+        const badge = document.getElementById('notificationBadge');
+        const list = document.getElementById('notificationList');
+        const empty = document.getElementById('notificationEmpty');
+        if (!badge || !list) return;
+        try {
+            const response = await fetch('/notifications/');
+            if (!response.ok) return;
+            const items = await response.json();
+            const unread = items.filter(item => !item.read).length;
+            badge.textContent = unread;
+            badge.style.display = unread > 0 ? 'inline-flex' : 'none';
+            list.innerHTML = items.slice(0, 8).map(item => `
+                <button type="button" class="list-group-item list-group-item-action ${item.read ? '' : 'active'} text-start" data-id="${item.id}">
+                    <p class="mb-1 small text-dark">${item.message}</p>
+                    <small class="text-muted">${new Date(item.created_at).toLocaleString('ru-RU')}</small>
+                </button>
+            `).join('');
+            empty.style.display = items.length === 0 ? 'block' : 'none';
+        } catch (error) {
+            console.error('Notification load failed', error);
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadNotifications();
-            const markAll = document.getElementById('markAllReadButton');
-            if (markAll) {
-                markAll.addEventListener('click', async () => {
-                    await fetch('/notifications/read', { method: 'POST' });
-                    await loadNotifications();
-                });
-            }
-        });
-    </script>
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNotifications();
+        const markAll = document.getElementById('markAllReadButton');
+        if (markAll) {
+            markAll.addEventListener('click', async () => {
+                await fetch('/notifications/read', { method: 'POST' });
+                await loadNotifications();
+            });
+        }
+    });
+</script>
 </body>
 </html>
