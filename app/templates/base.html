@@ -59,7 +59,9 @@
             </div>
         </header>
         <main class="dashboard-content">
+{% endif %}
             {% block content %}{% endblock %}
+{% if session.role %}
         </main>
     </div>
     <nav class="mobile-nav bottom-nav">
@@ -77,12 +79,12 @@
         {% endif %}
     </nav>
 </div>
-{% else %}
-<main class="dashboard-content">
-    {% block content %}{% endblock %}
-</main>
 {% endif %}
+{% if session.role %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% else %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endif %}
 {% block scripts %}{% endblock %}
 <script>
     async function loadNotifications() {
