@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Платежи{% endblock %}
 {% block content %}
+<a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-3">← Назад к панели администратора</a>
 <h1 class="mb-4">Платежи</h1>
 <div class="mb-3">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#paymentModal">Добавить платеж</button>

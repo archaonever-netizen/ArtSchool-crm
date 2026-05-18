@@ -2,7 +2,7 @@ from flask import render_template, session, redirect, url_for, request, jsonify
 from werkzeug.security import generate_password_hash
 from app.admin import admin_bp
 from app import db
-from app.models import User, Student, Tariff
+from app.models import User, Student, Tariff, InventoryItem, Sale
 from app.models import Lesson, Enrollment, Teacher, LessonTemplate, Notification, Program, AdjustmentRequest, Payment, Regulation
 from datetime import datetime
 
@@ -441,5 +441,159 @@ def regulation_detail_api(rid):
         db.session.commit()
         return jsonify({'status': 'ok'})
     db.session.delete(r)
+    db.session.commit()
+    return jsonify({'status': 'deleted'})
+
+
+# ----------------- INVENTORY -----------------
+@admin_bp.route('/inventory')
+def inventory_page():
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.login'))
+    return render_template('admin/inventory.html')
+
+
+@admin_bp.route('/api/inventory', methods=['GET', 'POST'])
+def inventory_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    if request.method == 'GET':
+        items = InventoryItem.query.order_by(InventoryItem.created_at.desc()).all()
+        return jsonify([{
+            'id': item.id,
+            'name': item.name,
+            'current_quantity': item.current_quantity,
+            'min_quantity': item.min_quantity,
+            'created_at': item.created_at.isoformat()
+        } for item in items])
+
+    data = request.get_json() or request.form
+    name = data.get('name')
+    current_quantity = float(data.get('current_quantity') or 0)
+    min_quantity = float(data.get('min_quantity') or 0)
+    if not name:
+        return jsonify({'error': 'name required'}), 400
+    item = InventoryItem(name=name, current_quantity=current_quantity, min_quantity=min_quantity)
+    db.session.add(item)
+    db.session.commit()
+    return jsonify({'status': 'ok', 'id': item.id})
+
+
+@admin_bp.route('/api/inventory/<int:item_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
+def inventory_detail_api(item_id):
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    item = InventoryItem.query.get(item_id)
+    if not item:
+        return jsonify({'error': 'Not found'}), 404
+    if request.method == 'GET':
+        return jsonify({
+            'id': item.id,
+            'name': item.name,
+            'current_quantity': item.current_quantity,
+            'min_quantity': item.min_quantity,
+            'created_at': item.created_at.isoformat()
+        })
+    if request.method in ('PUT', 'PATCH'):
+        data = request.get_json() or request.form
+        item.name = data.get('name', item.name)
+        item.current_quantity = float(data.get('current_quantity') or item.current_quantity)
+        item.min_quantity = float(data.get('min_quantity') or item.min_quantity)
+        db.session.commit()
+        return jsonify({'status': 'ok'})
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({'status': 'deleted'})
+
+
+# ----------------- SALES -----------------
+@admin_bp.route('/sales')
+def sales_page():
+    if session.get('role') != 'admin':
+        return redirect(url_for('auth.login'))
+    return render_template('admin/sales.html')
+
+
+@admin_bp.route('/api/sales', methods=['GET', 'POST'])
+def sales_api():
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    if request.method == 'GET':
+        sales = Sale.query.order_by(Sale.created_at.desc()).all()
+        return jsonify([{
+            'id': sale.id,
+            'contact_name': sale.contact_name,
+            'phone': sale.phone,
+            'status': sale.status,
+            'notes': sale.notes,
+            'created_at': sale.created_at.isoformat()
+        } for sale in sales])
+
+    data = request.get_json() or request.form
+    contact_name = data.get('contact_name')
+    phone = data.get('phone')
+    status = data.get('status') or 'lead'
+    notes = data.get('notes') or ''
+    if not contact_name or not phone:
+        return jsonify({'error': 'contact_name and phone required'}), 400
+    sale = Sale(contact_name=contact_name, phone=phone, status=status, notes=notes)
+    db.session.add(sale)
+    db.session.commit()
+    result = {'status': 'ok', 'id': sale.id}
+    if sale.status == 'sold':
+        result.update(_create_student_from_sale(sale))
+    return jsonify(result)
+
+
+def _create_student_from_sale(sale):
+    existing_user = User.query.filter_by(username=sale.phone).first()
+    student = Student.query.filter_by(phone=sale.phone).first()
+    if not existing_user:
+        existing_user = User(username=sale.phone, password_hash=generate_password_hash(sale.phone), role='student')
+        db.session.add(existing_user)
+        db.session.flush()
+    if not student:
+        student = Student(user_id=existing_user.id, full_name=sale.contact_name, phone=sale.phone, lessons_remaining=0)
+        db.session.add(student)
+    else:
+        if not student.user_id:
+            student.user_id = existing_user.id
+    db.session.commit()
+    return {'student': {'id': student.id, 'full_name': student.full_name, 'phone': student.phone}}
+
+
+@admin_bp.route('/api/sales/<int:sale_id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
+def sale_detail_api(sale_id):
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 401
+    sale = Sale.query.get(sale_id)
+    if not sale:
+        return jsonify({'error': 'Not found'}), 404
+    if request.method == 'GET':
+        return jsonify({
+            'id': sale.id,
+            'contact_name': sale.contact_name,
+            'phone': sale.phone,
+            'status': sale.status,
+            'notes': sale.notes,
+            'created_at': sale.created_at.isoformat()
+        })
+    if request.method in ('PUT', 'PATCH'):
+        data = request.get_json() or request.form
+        sale.contact_name = data.get('contact_name', sale.contact_name)
+        sale.phone = data.get('phone', sale.phone)
+        sale.notes = data.get('notes', sale.notes)
+        new_status = data.get('status', sale.status)
+        sold_created = None
+        if new_status and new_status != sale.status:
+            sale.status = new_status
+            if new_status == 'sold':
+                sold_created = _create_student_from_sale(sale)
+        db.session.commit()
+        result = {'status': 'ok'}
+        if sold_created:
+            result.update(sold_created)
+        return jsonify(result)
+    db.session.delete(sale)
     db.session.commit()
     return jsonify({'status': 'deleted'})

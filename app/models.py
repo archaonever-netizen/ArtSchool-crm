@@ -130,6 +130,21 @@ class Regulation(db.Model):
     content = db.Column(db.Text)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class InventoryItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    current_quantity = db.Column(db.Float, default=0.0)
+    min_quantity = db.Column(db.Float, default=0.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Sale(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    contact_name = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(20), default='lead')
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 # ---------- РАЗВИТИЕ (Roadmap / MindMap) ----------
 class Roadmap(db.Model):
     id = db.Column(db.Integer, primary_key=True)
