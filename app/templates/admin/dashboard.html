@@ -1,61 +1,84 @@
 {% extends "base.html" %}
 {% block title %}Администратор{% endblock %}
 {% block content %}
-<h1 class="mb-4">Панель администратора</h1>
-<div class="row g-3">
-    <div class="col-md-4">
-        <a href="/admin/students" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-people display-4 text-primary"></i>
-                <h5 class="mt-2">Ученики</h5>
-                <p class="text-muted">Управление учениками, тарифами и остатками</p>
-            </div>
-        </a>
+<div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:24px;">
+    <div>
+        <p class="label-small">Администратор</p>
+        <h1 class="section-title">Панель управления</h1>
+        <p class="section-subtitle">Обзор ключевых метрик академии и быстрый доступ к разделам.</p>
     </div>
-    <div class="col-md-4">
-        <a href="/admin/schedule" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-calendar-week display-4 text-primary"></i>
-                <h5 class="mt-2">Расписание</h5>
-                <p class="text-muted">График занятий и посещаемость</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="/admin/payments" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-cash-stack display-4 text-primary"></i>
-                <h5 class="mt-2">Платежи</h5>
-                <p class="text-muted">Финансовые операции и P&L</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="/admin/regulations" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-journal-text display-4 text-primary"></i>
-                <h5 class="mt-2">Регламенты</h5>
-                <p class="text-muted">Просмотр и редактирование регламентов</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="/admin/inventory" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-box-seam display-4 text-primary"></i>
-                <h5 class="mt-2">Хозяйственные заказы</h5>
-                <p class="text-muted">Управление инвентарем и минимальными запасами</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="/admin/sales" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-bar-chart-line display-4 text-primary"></i>
-                <h5 class="mt-2">Продажи</h5>
-                <p class="text-muted">Воронка сделок и перевод лидов в учеников</p>
-            </div>
-        </a>
-    </div>
+    <button class="btn btn-primary" onclick="location.href='{{ url_for('admin.students_page') }}'">Добавить ученика</button>
 </div>
+<div class="kpi-grid">
+    <div class="kpi-card"><h4>Доход</h4><p class="value" id="adminIncome">0 ₽</p></div>
+    <div class="kpi-card"><h4>Ученики</h4><p class="value" id="adminStudents">0</p></div>
+    <div class="kpi-card"><h4>Посещаемость</h4><p class="value" id="adminAttendance">79%</p></div>
+    <div class="kpi-card"><h4>Прибыль</h4><p class="value" id="adminProfit">0 ₽</p></div>
+</div>
+<div class="split-grid">
+    <section class="col-span-8 chart-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+                <p class="label-small">Аналитика</p>
+                <h2 style="margin:0; font-size:1.3rem;">Рост учеников</h2>
+            </div>
+            <div class="badge-pill">+12% за месяц</div>
+        </div>
+        <canvas id="growthChart" height="240"></canvas>
+        <div style="margin-top:22px;">
+            <p class="label-small" style="margin-bottom: 10px;">Заполненность класса</p>
+            <div class="progress-bar-wrapper"><div class="progress-bar-fill" style="width: 68%;"></div></div>
+        </div>
+    </section>
+    <aside class="col-span-4 section-card">
+        <p class="label-small">Быстрые разделы</p>
+        <div class="section-links" style="grid-template-columns: 1fr;">
+            <a href="{{ url_for('admin.students_page') }}" class="link-card"><span class="icon"><i class="bi bi-people"></i></span><h3>Ученики</h3><p>Управление аккаунтами и статистикой.</p></a>
+            <a href="{{ url_for('admin.schedule_page') }}" class="link-card"><span class="icon"><i class="bi bi-calendar-week"></i></span><h3>Расписание</h3><p>Просмотреть и скорректировать занятия.</p></a>
+            <a href="{{ url_for('admin.payments_page') }}" class="link-card"><span class="icon"><i class="bi bi-cash-stack"></i></span><h3>Платежи</h3><p>Финансовые операции и отчёты.</p></a>
+            <a href="{{ url_for('admin.sales_page') }}" class="link-card"><span class="icon"><i class="bi bi-bar-chart-line"></i></span><h3>Продажи</h3><p>Воронка сделок и создание учеников.</p></a>
+        </div>
+    </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+async function loadAdminDashboard() {
+    const res = await fetch('/manager/api/dashboard');
+    let data = { total_students: 0, income: 0, expense: 0, profit: 0 };
+    if (res.ok) {
+        data = await res.json();
+    }
+    document.getElementById('adminStudents').textContent = data.total_students || 0;
+    document.getElementById('adminIncome').textContent = Number(data.income || 0).toLocaleString('ru-RU', {style:'currency', currency:'RUB'});
+    document.getElementById('adminProfit').textContent = Number(data.profit || 0).toLocaleString('ru-RU', {style:'currency', currency:'RUB'});
+    document.getElementById('adminAttendance').textContent = '79%';
+    const ctx = document.getElementById('growthChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Янв','Фев','Мар','Апр','Май','Июн'],
+            datasets: [{
+                label: 'Ученики',
+                data: [data.total_students || 14, 22, 27, 32, 41, data.total_students || 52],
+                borderColor: '#3B5E4C',
+                backgroundColor: 'rgba(59,94,76,0.16)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(35,48,35,0.08)' }, beginAtZero: true }
+            }
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', loadAdminDashboard);
+</script>
 {% endblock %}

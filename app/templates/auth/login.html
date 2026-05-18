@@ -1,22 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Вход{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <h2 class="mb-4">Вход в систему</h2>
+<div style="min-height: calc(100vh - 120px); display:flex; align-items:center; justify-content:center; padding: 32px 16px;">
+    <div class="glass-card" style="max-width: 440px; width:100%; padding: 40px;">
+        <p class="label-small">Вход в CRM</p>
+        <h1 class="section-title" style="margin-bottom: 18px;">Добро пожаловать</h1>
+        <p class="section-subtitle" style="margin-bottom: 28px;">Введите логин и пароль для доступа к системе.</p>
         {% with messages = get_flashed_messages() %}
-          {% if messages %}<div class="alert alert-danger">{{ messages[0] }}</div>{% endif %}
+          {% if messages %}
+          <div class="section-card" style="background: rgba(200, 95, 95, 0.11); border-color: rgba(200,95,95,0.2); margin-bottom: 20px;">
+              <p style="margin:0; color:#8b2b2b;">{{ messages[0] }}</p>
+          </div>
+          {% endif %}
         {% endwith %}
         <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Логин (для ученика – номер телефона)</label>
-                <input type="text" class="form-control" name="username" required>
+            <div style="margin-bottom: 18px;">
+                <label class="label-small">Логин</label>
+                <input type="text" class="input-field" name="username" required>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Пароль</label>
-                <input type="password" class="form-control" name="password" required>
+            <div style="margin-bottom: 26px;">
+                <label class="label-small">Пароль</label>
+                <input type="password" class="input-field" name="password" required>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Войти</button>
+            <button type="submit" class="btn btn-primary">Войти</button>
         </form>
     </div>
 </div>

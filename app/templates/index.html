@@ -1,49 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Выбор роли{% endblock %}
 {% block content %}
-<style>
-    body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-    .role-card {
-        background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        padding: 2rem; text-align: center; height: 100%; transition: transform 0.2s;
-    }
-    .role-card:hover { transform: translateY(-5px); }
-    .role-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .btn-role { background-color: #1a1f36; color: white; padding: 0.75rem 2rem; border-radius: 8px; text-decoration: none; }
-    .btn-role:hover { background-color: #2d325a; color: white; }
-</style>
-<div class="text-center mb-5">
-    <h1 class="display-4 fw-bold" style="color: #1a1f36;">ArtSchool CRM</h1>
-    <p class="lead text-muted">Выберите роль для входа</p>
-</div>
-<div class="row justify-content-center g-4">
-    <div class="col-md-3 col-sm-6">
-        <div class="role-card">
-            <div class="role-icon">⚙️</div>
-            <h4>Администратор</h4>
-            <a href="/auth/login" class="btn-role mt-3">Войти</a>
+<div class="glass-card" style="max-width: 1080px; margin: 0 auto; padding: 42px 36px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between;">
+        <div style="max-width: 620px;">
+            <p class="label-small">ArtSchool CRM</p>
+            <h1 class="section-title">Центр Академического Художественного Образования ЕГОРОВЫХ</h1>
+            <p class="section-subtitle" style="margin-top: 18px; max-width: 560px;">Профессиональная система управления академией. Выберите роль и продолжите работу в обновлённом интерфейсе.</p>
+        </div>
+        <div style="min-width: 240px; padding: 22px 26px; background: rgba(255,255,255,0.8); border-radius: 26px; border: 1px solid rgba(255,255,255,0.82); box-shadow: var(--shadow-soft);">
+            <p class="label-small" style="margin-bottom: 12px;">Вход в систему</p>
+            <a href="/auth/login" class="btn btn-primary">Перейти к входу</a>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="role-card">
-            <div class="role-icon">📊</div>
-            <h4>Руководитель</h4>
-            <a href="/auth/login" class="btn-role mt-3">Войти</a>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="role-card">
-            <div class="role-icon">🎨</div>
-            <h4>Преподаватель</h4>
-            <a href="/auth/login" class="btn-role mt-3">Войти</a>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="role-card">
-            <div class="role-icon">👩‍🎓</div>
-            <h4>Ученик</h4>
-            <a href="/auth/login" class="btn-role mt-3">Войти</a>
-        </div>
+    <div class="section-links" style="margin-top: 36px;">
+        <a href="/auth/login" class="link-card">
+            <span class="icon"><i class="bi bi-speedometer2"></i></span>
+            <h3>Администратор</h3>
+            <p>Полный доступ к управлению учениками, расписанием, платежами и продажами.</p>
+        </a>
+        <a href="/auth/login" class="link-card">
+            <span class="icon"><i class="bi bi-bar-chart-line"></i></span>
+            <h3>Руководитель</h3>
+            <p>Контроль P&amp;L, запросы на корректировку и аналитика академии.</p>
+        </a>
+        <a href="/auth/login" class="link-card">
+            <span class="icon"><i class="bi bi-person-badge"></i></span>
+            <h3>Преподаватель</h3>
+            <p>Панель задач, расписание, ученики и подготовка к урокам.</p>
+        </a>
+        <a href="/auth/login" class="link-card">
+            <span class="icon"><i class="bi bi-person-circle"></i></span>
+            <h3>Ученик</h3>
+            <p>Личный кабинет с прогрессом, материалами и расписанием.</p>
+        </a>
     </div>
 </div>
 {% endblock %}

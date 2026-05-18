@@ -1,267 +1,207 @@
 {% extends 'base.html' %}
 {% block title %}Расписание{% endblock %}
 {% block content %}
-<a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-3">← Назад к панели администратора</a>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Расписание занятий</h3>
+<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px;">
     <div>
-        <button class="btn btn-primary" id="refreshCalendar">Обновить</button>
+        <p class="label-small">Администратор</p>
+        <h1 class="section-title">Расписание занятий</h1>
     </div>
+    <button class="btn btn-primary" id="refreshCalendar">Обновить</button>
 </div>
-<div id="calendar"></div>
-
-<!-- Modal -->
+<div class="chart-card fullcalendar-custom" style="padding:22px;">
+    <div id="calendar"></div>
+</div>
 <div class="modal fade" id="lessonModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header border-0">
         <h5 class="modal-title" id="lessonModalTitle">Создать занятие</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
         <form id="lessonForm">
             <input type="hidden" id="lessonId">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Название <i class="bi bi-question-circle" title="Имя занятия для календаря"></i></label>
-                    <input class="form-control" id="lessonTitle">
+            <div style="display:grid; gap:18px;">
+                <div>
+                    <label class="label-small">Название <span class="help-icon" title="Имя занятия для календаря">?</span></label>
+                    <input class="input-field" id="lessonTitle">
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Тема занятия <i class="bi bi-question-circle" title="Выберите шаблон урока из программы"></i></label>
-                    <select id="templateSelect" class="form-select"></select>
+                <div>
+                    <label class="label-small">Тема занятия <span class="help-icon" title="Выберите шаблон урока из программы">?</span></label>
+                    <select id="templateSelect" class="input-field"></select>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Преподаватель <i class="bi bi-question-circle" title="Кто будет вести занятие"></i></label>
-                    <select id="teacherSelect" class="form-select"></select>
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:18px;">
+                    <div>
+                        <label class="label-small">Преподаватель <span class="help-icon" title="Кто будет вести занятие">?</span></label>
+                        <select id="teacherSelect" class="input-field"></select>
+                    </div>
+                    <div>
+                        <label class="label-small">Макс. учеников <span class="help-icon" title="Максимальное количество учеников на занятии">?</span></label>
+                        <input class="input-field" id="lessonMax" type="number" value="10">
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Макс. учеников <i class="bi bi-question-circle" title="Максимальное количество учеников на занятии"></i></label>
-                    <input class="form-control" id="lessonMax" type="number" value="10">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Начало <i class="bi bi-question-circle" title="Дата и время начала занятия"></i></label>
-                    <input class="form-control" id="lessonStart" type="datetime-local">
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Конец <i class="bi bi-question-circle" title="Дата и время окончания занятия"></i></label>
-                    <input class="form-control" id="lessonEnd" type="datetime-local">
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:18px;">
+                    <div>
+                        <label class="label-small">Начало <span class="help-icon" title="Дата и время начала занятия">?</span></label>
+                        <input class="input-field" id="lessonStart" type="datetime-local">
+                    </div>
+                    <div>
+                        <label class="label-small">Конец <span class="help-icon" title="Дата и время окончания занятия">?</span></label>
+                        <input class="input-field" id="lessonEnd" type="datetime-local">
+                    </div>
                 </div>
             </div>
         </form>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-        <button type="button" class="btn btn-danger" id="deleteLessonBtn" style="display:none">Удалить</button>
+        <button type="button" class="btn btn-secondary" id="deleteLessonBtn" style="display:none">Удалить</button>
         <button type="button" class="btn btn-primary" id="saveLessonBtn">Сохранить</button>
       </div>
     </div>
   </div>
 </div>
-
-<!-- Attendance Modal -->
 <div class="modal fade" id="attendanceModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header border-0">
                 <h5 class="modal-title">Список записавшихся</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div id="attendanceList" class="list-group"></div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}
-
 {% block scripts %}
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
 let calendar;
-let teachers = [];
-let templates = [];
-
-async function fetchTeachers(){
-    try{
-        const res = await fetch('/admin/api/teachers');
-        if (res.ok) return await res.json();
-    }catch(e){ console.error(e); }
-    return [];
+function formatEventTitle(lesson) {
+    return `${lesson.title} • ${lesson.teacher_name || 'Без преподавателя'}`;
+}
+function resetLessonForm() {
+    document.getElementById('lessonId').value = '';
+    document.getElementById('lessonTitle').value = '';
+    document.getElementById('lessonStart').value = '';
+    document.getElementById('lessonEnd').value = '';
+    document.getElementById('lessonMax').value = '10';
+    document.getElementById('teacherSelect').value = '';
+    document.getElementById('templateSelect').value = '';
+    document.getElementById('deleteLessonBtn').style.display = 'none';
+}
+function openLessonModal(lesson = null) {
+    const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
+    document.getElementById('lessonModalTitle').textContent = lesson ? 'Редактировать занятие' : 'Создать занятие';
+    document.getElementById('lessonId').value = lesson ? lesson.id : '';
+    document.getElementById('lessonTitle').value = lesson ? lesson.title : '';
+    document.getElementById('lessonStart').value = lesson ? lesson.start.substring(0, 16) : '';
+    document.getElementById('lessonEnd').value = lesson ? lesson.end.substring(0, 16) : '';
+    document.getElementById('lessonMax').value = lesson ? lesson.max_students : 10;
+    document.getElementById('teacherSelect').value = lesson ? lesson.teacher_id || '' : '';
+    document.getElementById('templateSelect').value = lesson ? lesson.lesson_template_id || '' : '';
+    document.getElementById('deleteLessonBtn').style.display = lesson ? 'inline-flex' : 'none';
+    modal.show();
+}
+function renderLessonEvents(lessons) {
+    return lessons.map(lesson => ({
+        id: lesson.id,
+        title: formatEventTitle(lesson),
+        start: lesson.start,
+        end: lesson.end,
+        extendedProps: lesson
+    }));
+}
+async function loadSelectData() {
+    const [teachersRes, templatesRes] = await Promise.all([
+        fetch('/admin/api/teachers'),
+        fetch('/admin/api/lesson-templates')
+    ]);
+    const teachers = teachersRes.ok ? await teachersRes.json() : [];
+    const templates = templatesRes.ok ? await templatesRes.json() : [];
+    const teacherSelect = document.getElementById('teacherSelect');
+    teacherSelect.innerHTML = '<option value="">Без преподавателя</option>' + teachers.map(t => `<option value="${t.id}">${t.full_name}</option>`).join('');
+    const templateSelect = document.getElementById('templateSelect');
+    templateSelect.innerHTML = '<option value="">Без шаблона</option>' + templates.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+}
+async function refreshCalendar() {
+    const resp = await fetch('/admin/api/lessons');
+    if (!resp.ok) return;
+    const lessons = await resp.json();
+    calendar.removeAllEvents();
+    calendar.addEventSource(renderLessonEvents(lessons));
+}
+async function saveLesson() {
+    const id = document.getElementById('lessonId').value;
+    const data = {
+        title: document.getElementById('lessonTitle').value,
+        lesson_template_id: document.getElementById('templateSelect').value || null,
+        datetime_start: document.getElementById('lessonStart').value,
+        datetime_end: document.getElementById('lessonEnd').value,
+        teacher_id: document.getElementById('teacherSelect').value || null,
+        max_students: document.getElementById('lessonMax').value
+    };
+    if (!data.title || !data.datetime_start || !data.datetime_end) {
+        return alert('Заполните название и даты занятия');
+    }
+    const url = id ? `/admin/api/lesson/${id}` : '/admin/api/lesson/add';
+    const method = id ? 'PATCH' : 'POST';
+    const response = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    if (!response.ok) {
+        const result = await response.json();
+        return alert(result.error || 'Ошибка сохранения занятия');
+    }
+    bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
+    await refreshCalendar();
+}
+async function deleteLesson() {
+    const id = document.getElementById('lessonId').value;
+    if (!id || !confirm('Удалить занятие?')) return;
+    await fetch(`/admin/api/lesson/${id}`, { method: 'DELETE' });
+    bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
+    await refreshCalendar();
+}
+function displayAttendance(lesson) {
+    const list = document.getElementById('attendanceList');
+    list.innerHTML = `<div class="list-group-item"><p class="mb-1">Количество записавшихся: ${lesson.enrolled_count || 0}</p></div>`;
+    new bootstrap.Modal(document.getElementById('attendanceModal')).show();
 }
 
-async function fetchTemplates(){
-    try{
-        const res = await fetch('/admin/api/lesson-templates');
-        if (res.ok) return await res.json();
-    }catch(e){ console.error(e); }
-    return [];
-}
-
-function renderSelectOptions(items, element, emptyLabel){
-    element.innerHTML = `<option value="">${emptyLabel}</option>`;
-    items.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = item.program_name ? `${item.title} — ${item.program_name}` : item.title;
-        element.appendChild(opt);
-    });
-}
-
-async function loadCalendar(){
+function setupCalendar() {
     const calendarEl = document.getElementById('calendar');
-    teachers = await fetchTeachers();
-    templates = await fetchTemplates();
-    renderSelectOptions(templates, document.getElementById('templateSelect'), '-- выбрать тему --');
-    renderSelectOptions(teachers, document.getElementById('teacherSelect'), '-- выбрать преподавателя --');
-
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         selectable: true,
-        editable: false,
-        events: async function(fetchInfo, successCallback, failureCallback){
-            try{
-                const res = await fetch('/admin/api/lessons');
-                const data = await res.json();
-                successCallback(data.map(item => ({
-                    id: item.id,
-                    title: item.lesson_template_title ? `${item.lesson_template_title}` : item.title,
-                    start: item.start,
-                    end: item.end,
-                    extendedProps: {
-                        teacher_id: item.teacher_id,
-                        teacher_name: item.teacher_name,
-                        enrolled_count: item.enrolled_count
-                    }
-                })));
-            }catch(e){
-                console.error(e);
-                failureCallback(e);
-            }
+        selectMirror: true,
+        eventClick: async info => {
+            const lesson = info.event.extendedProps;
+            openLessonModal(lesson);
         },
-        select: function(info){
-            openLessonModal({start: info.startStr, end: info.endStr});
-        },
-        eventClick: async function(info){
-            const id = info.event.id;
-            openAttendanceModal(id);
+        select: selectionInfo => {
+            resetLessonForm();
+            document.getElementById('lessonStart').value = selectionInfo.startStr.substring(0, 16);
+            document.getElementById('lessonEnd').value = selectionInfo.endStr ? selectionInfo.endStr.substring(0, 16) : selectionInfo.startStr.substring(0, 16);
+            openLessonModal();
+            calendar.unselect();
         }
     });
     calendar.render();
 }
 
-function openLessonModal(data){
-    const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
-    document.getElementById('lessonId').value = data.id || '';
-    document.getElementById('lessonTitle').value = data.title || '';
-    document.getElementById('templateSelect').value = data.lesson_template_id || '';
-    document.getElementById('teacherSelect').value = data.teacher_id || '';
-    if (data.start){
-        document.getElementById('lessonStart').value = data.start.substring(0,16);
-    } else {
-        document.getElementById('lessonStart').value = '';
-    }
-    if (data.end){
-        document.getElementById('lessonEnd').value = data.end.substring(0,16);
-    } else {
-        document.getElementById('lessonEnd').value = '';
-    }
-    document.getElementById('lessonMax').value = data.max_students || 10;
-    document.getElementById('deleteLessonBtn').style.display = data.id ? 'inline-block' : 'none';
-    modal.show();
-}
-
-async function saveLesson(){
-    const id = document.getElementById('lessonId').value;
-    const payload = {
-        title: document.getElementById('lessonTitle').value,
-        lesson_template_id: document.getElementById('templateSelect').value || null,
-        teacher_id: document.getElementById('teacherSelect').value || null,
-        datetime_start: document.getElementById('lessonStart').value,
-        datetime_end: document.getElementById('lessonEnd').value,
-        max_students: document.getElementById('lessonMax').value
-    };
-    if (!payload.title || !payload.datetime_start || !payload.datetime_end) {
-        return alert('Заполните обязательные поля');
-    }
-    const url = id ? `/admin/api/lesson/${id}` : '/admin/api/lesson/add';
-    const method = id ? 'PATCH' : 'POST';
-    const res = await fetch(url, {method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    if (res.ok){
-        bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
-        calendar.refetchEvents();
-    } else {
-        const error = await res.json();
-        alert(error.error || 'Ошибка при сохранении занятия');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async ()=>{
-    await loadCalendar();
-    document.getElementById('refreshCalendar').addEventListener('click', () => calendar.refetchEvents());
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSelectData();
+    setupCalendar();
+    await refreshCalendar();
+    document.getElementById('refreshCalendar').addEventListener('click', refreshCalendar);
     document.getElementById('saveLessonBtn').addEventListener('click', saveLesson);
-    document.getElementById('deleteLessonBtn').addEventListener('click', async ()=>{
-        const id = document.getElementById('lessonId').value;
-        if (!id) return;
-        if (!confirm('Удалить занятие?')) return;
-        const res = await fetch(`/admin/api/lesson/${id}`, {method:'DELETE'});
-        if (res.ok){
-            bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
-            calendar.refetchEvents();
-        } else {
-            const error = await res.json();
-            alert(error.error || 'Ошибка при удалении занятия');
-        }
-    });
+    document.getElementById('deleteLessonBtn').addEventListener('click', deleteLesson);
 });
-
-async function openAttendanceModal(lessonId){
-    const res = await fetch(`/admin/api/lesson/${lessonId}/students`);
-    if (!res.ok) return alert('Ошибка загрузки списка студентов');
-    const data = await res.json();
-    const list = document.getElementById('attendanceList');
-    list.innerHTML = '';
-    if (!data.length) {
-        list.innerHTML = '<div class="text-muted">Нет записавшихся</div>';
-    }
-    data.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'list-group-item d-flex justify-content-between align-items-center';
-        div.innerHTML = `
-            <div>
-                <div><strong>${item.full_name || item.phone}</strong></div>
-                <div class="small text-muted">${item.phone || ''}</div>
-            </div>
-            <div class="btn-group btn-group-sm" role="group">
-                <button class="btn btn-success" data-enroll="${item.enrollment_id}" data-action="attended">Пришёл</button>
-                <button class="btn btn-warning" data-enroll="${item.enrollment_id}" data-action="missed">Не пришёл</button>
-            </div>
-        `;
-        list.appendChild(div);
-    });
-    const modal = new bootstrap.Modal(document.getElementById('attendanceModal'));
-    modal.show();
-    list.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('click', async ()=>{
-            const enrollmentId = btn.getAttribute('data-enroll');
-            const status = btn.getAttribute('data-action') === 'attended' ? 'attended' : 'missed';
-            const response = await fetch(`/admin/api/lesson/${lessonId}/attendance`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({enrollment_id: enrollmentId, status})});
-            if (response.ok) {
-                btn.closest('.list-group-item').classList.add('opacity-50');
-            } else {
-                const error = await response.json();
-                alert(error.error || 'Ошибка при сохранении посещаемости');
-            }
-        });
-    });
-}
 </script>
 {% endblock %}

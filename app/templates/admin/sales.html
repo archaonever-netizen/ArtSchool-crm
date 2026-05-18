@@ -1,152 +1,114 @@
 {% extends 'base.html' %}
 {% block title %}Продажи / Воронка{% endblock %}
 {% block content %}
-<a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm mb-3">← Назад к панели администратора</a>
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Продажи / Воронка</h3>
+<div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:18px;">
+    <div>
+        <p class="label-small">Администратор</p>
+        <h1 class="section-title">Продажи / Воронка</h1>
+    </div>
     <button class="btn btn-primary" id="addSaleBtn">Добавить сделку</button>
 </div>
-<div class="row row-cols-1 row-cols-md-3 g-3" id="salesBoard">
-    <div class="col">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <strong>Lead</strong>
-            </div>
-            <div class="card-body" id="leadColumn"></div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <strong>Negotiation</strong>
-            </div>
-            <div class="card-body" id="negotiationColumn"></div>
-        </div>
-    </div>
-    <div class="col">
-        <div class="card h-100">
-            <div class="card-header bg-light">
-                <strong>Sold</strong>
-            </div>
-            <div class="card-body" id="soldColumn"></div>
-        </div>
-    </div>
+<div class="split-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+    <div class="section-card" id="leadColumn"><h3>Lead</h3></div>
+    <div class="section-card" id="negotiationColumn"><h3>Negotiation</h3></div>
+    <div class="section-card" id="soldColumn"><h3>Sold</h3></div>
 </div>
-
 <div class="modal fade" id="saleModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header border-0">
         <h5 class="modal-title" id="saleModalTitle">Добавить сделку</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
-        <form id="saleForm">
+        <form id="saleForm" style="display:grid; gap:18px;">
             <input type="hidden" id="saleId">
-            <div class="mb-3">
-                <label class="form-label">Имя контакта <i class="bi bi-question-circle" title="Имя потенциального клиента"></i></label>
-                <input type="text" id="saleContactName" class="form-control" required>
+            <div>
+                <label class="label-small">Имя контакта</label>
+                <input type="text" id="saleContactName" class="input-field" required>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Телефон <i class="bi bi-question-circle" title="Телефон клиента, используется как логин при продаже"></i></label>
-                <input type="text" id="salePhone" class="form-control" required>
+            <div>
+                <label class="label-small">Телефон</label>
+                <input type="text" id="salePhone" class="input-field" required>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Статус <i class="bi bi-question-circle" title="Текущий статус сделки"></i></label>
-                <select id="saleStatus" class="form-select">
-                    <option value="lead">lead</option>
-                    <option value="negotiation">negotiation</option>
-                    <option value="sold">sold</option>
-                </select>
+            <div>
+                <label class="label-small">Статус</label>
+                <select id="saleStatus" class="input-field"><option value="lead">lead</option><option value="negotiation">negotiation</option><option value="sold">sold</option></select>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Заметки <i class="bi bi-question-circle" title="Дополнительная информация по сделке"></i></label>
-                <textarea id="saleNotes" class="form-control" rows="4"></textarea>
+            <div>
+                <label class="label-small">Заметки</label>
+                <textarea id="saleNotes" class="input-field" rows="4"></textarea>
             </div>
         </form>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
         <button type="button" class="btn btn-primary" id="saveSaleBtn">Сохранить</button>
       </div>
     </div>
   </div>
 </div>
-
 <div class="modal fade" id="soldSuccessModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header border-0">
         <h5 class="modal-title">Ученик создан</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
-      <div class="modal-body">
-        <div id="soldSuccessMessage"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-      </div>
+      <div class="modal-body"><div id="soldSuccessMessage"></div></div>
+      <div class="modal-footer border-0 pt-0"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button></div>
     </div>
   </div>
 </div>
 {% endblock %}
-
 {% block scripts %}
 <script>
-const STATUS_ORDER = ['lead', 'negotiation', 'sold'];
-
-async function fetchSales() {
+const STATUS_ORDER = ['lead','negotiation','sold'];
+async function fetchSales(){
     const res = await fetch('/admin/api/sales');
     if (!res.ok) return [];
     return await res.json();
 }
-
-function createSaleCard(sale) {
+function createSaleCard(sale){
     const card = document.createElement('div');
-    card.className = 'card mb-3';
+    card.className = 'floating-row';
     card.dataset.id = sale.id;
-    const nextStatusLabel = sale.status === 'lead' ? 'Negotiation' : sale.status === 'negotiation' ? 'Sold' : null;
+    const nextLabel = sale.status === 'lead' ? 'Negotiation' : sale.status === 'negotiation' ? 'Sold' : '';
     card.innerHTML = `
-        <div class="card-body">
-            <h5 class="card-title mb-1">${sale.contact_name}</h5>
-            <p class="card-text small mb-1"><strong>Телефон:</strong> ${sale.phone}</p>
-            <p class="card-text small mb-2"><strong>Заметки:</strong> ${sale.notes ? sale.notes.replace(/\n/g, '<br>') : '<span class="text-muted">нет</span>'}</p>
-            <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-sm btn-outline-primary" data-action="edit">Ред.</button>
-                <button class="btn btn-sm btn-outline-danger" data-action="delete">Удалить</button>
-                ${nextStatusLabel ? `<button class="btn btn-sm btn-outline-success" data-action="next">Перевести в ${nextStatusLabel}</button>` : ''}
-            </div>
+        <div class="row-meta"><p class="row-title">${sale.contact_name}</p><p class="row-subtitle">${sale.phone} · ${sale.notes || 'Без заметок'}</p></div>
+        <div class="row-actions">
+            <button class="btn btn-secondary btn-sm" data-action="edit" data-id="${sale.id}">Ред.</button>
+            <button class="btn btn-secondary btn-sm" data-action="delete" data-id="${sale.id}">Удалить</button>
+            ${nextLabel ? `<button class="btn btn-primary btn-sm" data-action="next" data-id="${sale.id}">Перевести в ${nextLabel}</button>` : ''}
         </div>
     `;
     return card;
 }
-
-async function renderSalesBoard() {
+async function renderSalesBoard(){
     const sales = await fetchSales();
-    const columns = {
-        lead: document.getElementById('leadColumn'),
-        negotiation: document.getElementById('negotiationColumn'),
-        sold: document.getElementById('soldColumn')
-    };
-    Object.values(columns).forEach(col => col.innerHTML = '');
-    sales.forEach(sale => {
+    const lead = document.getElementById('leadColumn');
+    const neg = document.getElementById('negotiationColumn');
+    const sold = document.getElementById('soldColumn');
+    lead.innerHTML = '<h3>Lead</h3>';
+    neg.innerHTML = '<h3>Negotiation</h3>';
+    sold.innerHTML = '<h3>Sold</h3>';
+    sales.forEach(sale=>{
         const card = createSaleCard(sale);
-        columns[sale.status]?.appendChild(card);
+        if (sale.status === 'lead') lead.appendChild(card);
+        else if (sale.status === 'negotiation') neg.appendChild(card);
+        else sold.appendChild(card);
     });
 }
-
-function openSaleModal(sale = null) {
-    const modal = new bootstrap.Modal(document.getElementById('saleModal'));
+function openSaleModal(sale=null){
     document.getElementById('saleModalTitle').textContent = sale ? 'Редактировать сделку' : 'Добавить сделку';
     document.getElementById('saleId').value = sale ? sale.id : '';
     document.getElementById('saleContactName').value = sale ? sale.contact_name : '';
     document.getElementById('salePhone').value = sale ? sale.phone : '';
     document.getElementById('saleStatus').value = sale ? sale.status : 'lead';
     document.getElementById('saleNotes').value = sale ? sale.notes || '' : '';
-    modal.show();
+    new bootstrap.Modal(document.getElementById('saleModal')).show();
 }
-
-async function saveSale() {
+async function saveSale(){
     const id = document.getElementById('saleId').value;
     const payload = {
         contact_name: document.getElementById('saleContactName').value,
@@ -154,80 +116,56 @@ async function saveSale() {
         status: document.getElementById('saleStatus').value,
         notes: document.getElementById('saleNotes').value
     };
-    if (!payload.contact_name || !payload.phone) {
-        return alert('Имя и телефон обязательны');
-    }
+    if (!payload.contact_name || !payload.phone) return alert('Имя и телефон обязательны');
     const url = id ? `/admin/api/sales/${id}` : '/admin/api/sales';
     const method = id ? 'PATCH' : 'POST';
-    const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-    if (!res.ok) {
-        const error = await res.json();
-        return alert(error.error || 'Ошибка при сохранении сделки');
-    }
+    const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    if (!res.ok) { const error = await res.json(); return alert(error.error || 'Ошибка'); }
     const data = await res.json();
     bootstrap.Modal.getInstance(document.getElementById('saleModal')).hide();
     if (data.student || data.message) {
-        const message = data.student ? `Ученик создан: ${data.student.full_name} (${data.student.phone})` : data.message;
-        document.getElementById('soldSuccessMessage').innerHTML = message;
+        document.getElementById('soldSuccessMessage').textContent = data.student ? `Ученик создан: ${data.student.full_name} (${data.student.phone})` : data.message;
         new bootstrap.Modal(document.getElementById('soldSuccessModal')).show();
     }
     await renderSalesBoard();
 }
-
-async function updateSaleStatus(id, nextStatus) {
-    const res = await fetch(`/admin/api/sales/${id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: nextStatus }) });
-    if (!res.ok) {
-        const error = await res.json();
-        return alert(error.error || 'Ошибка при обновлении статуса');
-    }
+async function updateSaleStatus(id, nextStatus){
+    const res = await fetch(`/admin/api/sales/${id}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ status: nextStatus }) });
+    if (!res.ok) { const error = await res.json(); return alert(error.error || 'Ошибка'); }
     const data = await res.json();
     if (data.student || data.message) {
-        const message = data.student ? `Ученик создан: ${data.student.full_name} (${data.student.phone})` : data.message;
-        document.getElementById('soldSuccessMessage').innerHTML = message;
+        document.getElementById('soldSuccessMessage').textContent = data.student ? `Ученик создан: ${data.student.full_name} (${data.student.phone})` : data.message;
         new bootstrap.Modal(document.getElementById('soldSuccessModal')).show();
     }
     await renderSalesBoard();
 }
-
-async function deleteSale(id) {
+async function deleteSale(id){
     if (!confirm('Удалить сделку?')) return;
-    const res = await fetch(`/admin/api/sales/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-        await renderSalesBoard();
-    } else {
-        const error = await res.json();
-        alert(error.error || 'Ошибка при удалении сделки');
-    }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
+    await fetch(`/admin/api/sales/${id}`, { method:'DELETE' });
     await renderSalesBoard();
-    document.getElementById('addSaleBtn').addEventListener('click', () => openSaleModal());
+}
+document.addEventListener('DOMContentLoaded', async ()=>{
+    await renderSalesBoard();
+    document.getElementById('addSaleBtn').addEventListener('click', ()=>openSaleModal());
     document.getElementById('saveSaleBtn').addEventListener('click', saveSale);
-    document.getElementById('salesBoard').addEventListener('click', async (event) => {
+    document.querySelector('.split-grid').addEventListener('click', async (event)=>{
         const button = event.target.closest('button');
         if (!button) return;
-        const card = button.closest('.card');
-        if (!card) return;
-        const id = card.dataset.id;
-        const action = button.getAttribute('data-action');
+        const id = button.dataset.id;
+        const action = button.dataset.action;
         if (action === 'edit') {
             const res = await fetch(`/admin/api/sales/${id}`);
             if (!res.ok) return alert('Сделка не найдена');
             const sale = await res.json();
             openSaleModal(sale);
         }
-        if (action === 'delete') {
-            await deleteSale(id);
-        }
+        if (action === 'delete') await deleteSale(id);
         if (action === 'next') {
-            const currentSale = await fetch(`/admin/api/sales/${id}`);
-            if (!currentSale.ok) return alert('Сделка не найдена');
-            const sale = await currentSale.json();
+            const response = await fetch(`/admin/api/sales/${id}`);
+            if (!response.ok) return;
+            const sale = await response.json();
             const nextIndex = STATUS_ORDER.indexOf(sale.status) + 1;
-            if (nextIndex < STATUS_ORDER.length) {
-                await updateSaleStatus(id, STATUS_ORDER[nextIndex]);
-            }
+            if (nextIndex < STATUS_ORDER.length) await updateSaleStatus(id, STATUS_ORDER[nextIndex]);
         }
     });
 });

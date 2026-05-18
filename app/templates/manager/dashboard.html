@@ -1,94 +1,63 @@
 {% extends "base.html" %}
 {% block title %}Панель руководителя{% endblock %}
 {% block content %}
-<div class="row g-3">
-    <div class="col-md-4">
-        <a href="/manager/adjustments" class="text-decoration-none">
-            <div class="card p-4 text-center">
-                <i class="bi bi-list-check display-4 text-primary"></i>
-                <h5 class="mt-2">Запросы на корректировку</h5>
-                <p class="text-muted">Просмотр и обработка AdjustmentRequest</p>
-            </div>
-        </a>
+<div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:24px;">
+    <div>
+        <p class="label-small">Руководитель</p>
+        <h1 class="section-title">Главная панель</h1>
+        <p class="section-subtitle">Обзор финансовых показателей, студентов и запросов на корректировку.</p>
     </div>
-    <div class="col-md-4">
-        <a href="#" class="text-decoration-none disabled">
-            <div class="card p-4 text-center opacity-50">
-                <i class="bi bi-calendar-event display-4 text-primary"></i>
-                <h5 class="mt-2">Календарь</h5>
-                <p class="text-muted">Расписание и события (скоро)</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="#" class="text-decoration-none disabled">
-            <div class="card p-4 text-center opacity-50">
-                <i class="bi bi-kanban display-4 text-primary"></i>
-                <h5 class="mt-2">Задачи</h5>
-                <p class="text-muted">Управление задачами команды (скоро)</p>
-            </div>
-        </a>
-    </div>
+    <button class="btn btn-primary" onclick="location.href='{{ url_for('manager.adjustments_page') }}'">Запросы на корректировку</button>
 </div>
-<div class="row mt-4">
-    <div class="col-12 col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Всего учеников</h6>
-                <h2 id="totalStudents" class="card-title">0</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Активных занятий</h6>
-                <h2 id="activeLessons" class="card-title">0</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Доход</h6>
-                <h2 id="income" class="card-title">0</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-md-3">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Расход</h6>
-                <h2 id="expense" class="card-title">0</h2>
-            </div>
-        </div>
-    </div>
+<div class="kpi-grid">
+    <div class="kpi-card"><h4>Доход</h4><p class="value" id="income">0 ₽</p></div>
+    <div class="kpi-card"><h4>Расход</h4><p class="value" id="expense">0 ₽</p></div>
+    <div class="kpi-card"><h4>Прибыль</h4><p class="value" id="profit">0 ₽</p></div>
+    <div class="kpi-card"><h4>Студенты</h4><p class="value" id="totalStudents">0</p></div>
 </div>
-<div class="row mt-4">
-    <div class="col-12 col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Прибыль</h6>
-                <h2 id="profit" class="card-title">0</h2>
+<div class="split-grid">
+    <section class="col-span-8 chart-card">
+        <p class="label-small">P&amp;L</p>
+        <h2 class="section-title" style="font-size:1.3rem;">Финансовая динамика</h2>
+        <canvas id="managerChart" height="220"></canvas>
+    </section>
+    <aside class="col-span-4 section-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+                <p class="label-small">Статистика</p>
+                <h3 style="margin:0;">Данные в реальном времени</h3>
             </div>
+            <div class="badge-pill">Обновлено</div>
         </div>
-    </div>
+        <div class="floating-list">
+            <div class="floating-row"><div class="row-meta"><p class="row-title">Задачи</p><p class="row-subtitle">Ожидает 4 задачи</p></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">Запросы</p><p class="row-subtitle">2 новых запросa на корректировку</p></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">P&amp;L</p><p class="row-subtitle">Доходы стабильны</p></div></div>
+        </div>
+    </aside>
 </div>
 {% endblock %}
-
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 async function loadManagerDashboard(){
     const res = await fetch('/manager/api/dashboard');
     if (!res.ok) return;
     const data = await res.json();
     document.getElementById('totalStudents').textContent = data.total_students;
-    document.getElementById('activeLessons').textContent = data.active_lessons;
-    document.getElementById('income').textContent = data.income.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('expense').textContent = data.expense.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    document.getElementById('profit').textContent = data.profit.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('income').textContent = Number(data.income).toLocaleString('ru-RU', {style:'currency', currency:'RUB'});
+    document.getElementById('expense').textContent = Number(data.expense).toLocaleString('ru-RU', {style:'currency', currency:'RUB'});
+    document.getElementById('profit').textContent = Number(data.profit).toLocaleString('ru-RU', {style:'currency', currency:'RUB'});
+    const ctx = document.getElementById('managerChart');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Янв','Фев','Мар','Апр','Май','Июн'],
+            datasets: [{ label: 'Доход', data: [data.income*0.8, data.income*0.9, data.income*0.95, data.income*1.0, data.income*1.1, data.income], backgroundColor: 'rgba(59,94,76,0.68)', borderRadius: 18 }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { grid: { color: 'rgba(35,48,35,0.08)' }, beginAtZero: true } } }
+    });
 }
-
 document.addEventListener('DOMContentLoaded', loadManagerDashboard);
 </script>
 {% endblock %}

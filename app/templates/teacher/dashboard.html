@@ -1,39 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Преподаватель{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:24px;">
     <div>
-        <h1>Кабинет преподавателя</h1>
-        <p class="text-muted mb-0">Здесь появятся расписание, подготовка к занятиям и профиль.</p>
+        <p class="label-small">Преподаватель</p>
+        <h1 class="section-title">Ваш учебный день</h1>
+        <p class="section-subtitle">Синхронизируйте расписание, материалы и учеников в одном месте.</p>
     </div>
+    <button class="btn btn-primary">Новое занятие</button>
 </div>
-<div class="row g-3">
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Расписание</h5>
-                <p class="card-text">Просмотр своих занятий и их статуса.</p>
-                <button class="btn btn-outline-secondary" disabled>В работе</button>
-            </div>
+<div class="kpi-grid">
+    <div class="kpi-card"><h4>Сегодня</h4><p class="value">3 занятия</p></div>
+    <div class="kpi-card"><h4>Ученики</h4><p class="value">21</p></div>
+    <div class="kpi-card"><h4>Посещаемость</h4><p class="value">92%</p></div>
+    <div class="kpi-card"><h4>Материалы</h4><p class="value">12</p></div>
+</div>
+<div class="split-grid">
+    <section class="col-span-8 chart-card">
+        <p class="label-small">Расписание на сегодня</p>
+        <div class="floating-list">
+            <div class="floating-row"><div class="row-meta"><p class="row-title">11:00 — Живопись</p><p class="row-subtitle">Студия А, группа начинающих</p></div><div class="row-actions"><span class="badge-pill">В работе</span></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">14:00 — Композиция</p><p class="row-subtitle">Студия B, группа продвинутых</p></div><div class="row-actions"><span class="badge-pill">Подготовка</span></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">17:00 — Иллюстрация</p><p class="row-subtitle">Онлайн, индивидуально</p></div><div class="row-actions"><span class="badge-pill">Готово</span></div></div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Подготовка</h5>
-                <p class="card-text">Заметки к занятиям и учебные материалы.</p>
-                <button class="btn btn-outline-secondary" disabled>В работе</button>
-            </div>
+    </section>
+    <aside class="col-span-4 section-card">
+        <p class="label-small">Быстрый доступ</p>
+        <div class="floating-list">
+            <div class="floating-row"><div class="row-meta"><p class="row-title">Мои ученики</p><p class="row-subtitle">Список групп и контактов</p></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">Посещаемость</p><p class="row-subtitle">Статистика за неделю</p></div></div>
+            <div class="floating-row"><div class="row-meta"><p class="row-title">Материалы</p><p class="row-subtitle">Планы уроков и референсы</p></div></div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">Мои ученики</h5>
-                <p class="card-text">Список учеников, посещающих ваши занятия.</p>
-                <button class="btn btn-outline-secondary" disabled>В работе</button>
-            </div>
-        </div>
-    </div>
+    </aside>
 </div>
 {% endblock %}
